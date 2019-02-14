@@ -1,0 +1,12 @@
+{
+  "name": "LTCsync",
+  "version": "0.1.0",
+  "description": "Syncs media files using LTC",
+  "main": "index.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Iterative Features",
+  "license": "GPL-3.0"
+}

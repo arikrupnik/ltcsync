@@ -1,0 +1,60 @@
+body {
+    font-family: monospace;
+}
+
+#filedisplay {
+    white-space: nowrap;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+tbody {
+    border: solid thin;
+}
+
+tbody.dummy-spacer {
+    border: none;
+}
+tbody.dummy-spacer td {
+    height: 1em;
+    border: none;
+}
+
+.group-header {
+    border-bottom: solid thin;
+}
+
+th {
+    text-align: left;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+}
+
+td {
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    border-right: solid thin;
+}
+
+.name {
+    width: 100%;
+    padding: 1px;
+}
+
+.name > span {
+    display: inline-block;
+    overflow: visible;
+    background: coral;
+}
+
+
+
+
+#errors {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
