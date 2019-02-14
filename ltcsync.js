@@ -25,7 +25,6 @@ function longest_bounds(editing_session) {
         editing_session.groups.concat(editing_session.non_ltc_files) :
         editing_session.groups;
   return all_groups.map(
-  //return editing_session.groups.map(
     g => g.bounds().duration()).reduce(
       (acc, v) => Math.max(acc, v), 0);
 }
@@ -63,7 +62,7 @@ function file_to_html(file, group_bounds) {
   fn.innerHTML = path.basename(file.ffprobe.format.filename);
   const lb=longest_bounds(document.editing_session);
   const width=eval(file.ffprobe.format.duration)/lb;
-  const margin_left=file.ltc ? (file.ltc.bounds.start-group_bounds.start)/lb : 0;
+  const margin_left=(file.ltc && group_bounds) ? (file.ltc.bounds.start-group_bounds.start)/lb : 0;
   fn.setAttribute("style", `width: ${width*100}%; margin-left: ${margin_left*100}%`);
   
   return e;
@@ -71,25 +70,39 @@ function file_to_html(file, group_bounds) {
 
 function file_group_to_html(group) {
   const e=document.createElement("tbody");
-  let sorted_files=group.files;
 
-  if (group.bounds().start === null && group.files.length) {
-    // group===session.non_ltc_files
-    const h=e.appendChild(document.createElement("tr"));
-    h.setAttribute("class", "group-header");
-    h.appendChild(document.createElement("td"));
-    h.appendChild(document.createElement("td"));
-    h.appendChild(document.createElement("th")).innerHTML=`Files without embedded timecode: ${group.files.length}`;
-  } else if (group.files.length > 1) {
-    const h=e.appendChild(document.createElement("tr"));
-    h.setAttribute("class", "group-header");
-    h.appendChild(document.createElement("td")).innerHTML=pretty_time(group.bounds().start);
-    h.appendChild(document.createElement("td")).innerHTML=pretty_time(group.bounds().duration());
-    h.appendChild(document.createElement("th")).innerHTML=`Group of ${group.files.length} overlapping files`;
-    sorted_files=group.files.slice().sort((f0, f1) => f0.ltc.bounds.start - f1.ltc.bounds.start);
-  }
-
+  const h=e.appendChild(document.createElement("tr"));
+  h.setAttribute("class", "group-header");
+  h.appendChild(document.createElement("td")).innerHTML=pretty_time(group.bounds().start);
+  h.appendChild(document.createElement("td")).innerHTML=pretty_time(group.bounds().duration());
+  h.appendChild(document.createElement("th")).innerHTML=`Group of ${group.files.length} overlapping files`;
+  const sorted_files=group.files.slice().sort((f0, f1) => f0.ltc.bounds.start - f1.ltc.bounds.start);
   sorted_files.forEach(f => e.appendChild(file_to_html(f, group.bounds())));
+
+  return e;
+}
+function nonoverlapping_groups_to_html(groups) {
+  const e=document.createElement("tbody");
+
+  const h=e.appendChild(document.createElement("tr"));
+  h.setAttribute("class", "group-header");
+  h.appendChild(document.createElement("td"));
+  h.appendChild(document.createElement("td"));
+  h.appendChild(document.createElement("th")).innerHTML=`Non-overlapping files with embedded timecode: ${groups.length}`;
+
+  groups.forEach(g => g.files.forEach(f => e.appendChild(file_to_html(f, null))));
+
+  return e;
+}
+function nonltc_file_group_to_html(group) {
+  const e=document.createElement("tbody");
+
+  const h=e.appendChild(document.createElement("tr"));
+  h.setAttribute("class", "group-header");
+  h.appendChild(document.createElement("th"));
+  h.appendChild(document.createElement("th")).innerHTML="Duration";
+  h.appendChild(document.createElement("th")).innerHTML=`Files without embedded timecode: ${group.files.length}`;
+  group.files.forEach(f => e.appendChild(file_to_html(f, group.bounds())));
 
   return e;
 }
@@ -102,14 +115,21 @@ function editing_session_to_html(session) {
   h.appendChild(document.createElement("th")).innerHTML="Duration";
   h.appendChild(document.createElement("th")).innerHTML="File notes";
   
-  session.groups.slice().sort((g0, g1) => g0.bounds().start-g1.bounds().start).forEach(g => {
+  session.groups.filter(g => g.files.length>1).sort((g0, g1) => g0.bounds().start-g1.bounds().start).forEach(g => {
     e.appendChild(file_group_to_html(g));
-
     e.appendChild(document.createElement("tbody")).appendChild(document.createElement("tr")).appendChild(document.createElement("td"));
     e.lastChild.setAttribute("class", "dummy-spacer");
   });
+
+  const nonoverlapping_groups=session.groups.filter(g => g.files.length==1).sort((g0, g1) => g0.bounds().start-g1.bounds().start);
+  if (nonoverlapping_groups.length) {
+    e.appendChild(nonoverlapping_groups_to_html(nonoverlapping_groups));
+    e.appendChild(document.createElement("tbody")).appendChild(document.createElement("tr")).appendChild(document.createElement("td"));
+    e.lastChild.setAttribute("class", "dummy-spacer");
+  };
+
   if (session.non_ltc_files.files.length) {
-    e.appendChild(file_group_to_html(session.non_ltc_files));
+    e.appendChild(nonltc_file_group_to_html(session.non_ltc_files));
   }
   return e;
 }

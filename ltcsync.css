@@ -27,7 +27,7 @@ tbody.dummy-spacer td {
     border-bottom: solid thin;
 }
 
-td {
+td, .group-header th {
     padding-left: 0.5em;
     padding-right: 0.5em;
     border-right: solid thin;
