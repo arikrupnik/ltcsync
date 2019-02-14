@@ -1,6 +1,7 @@
 
 const electron=require("electron");
 const path = require("path");
+const fs = require("fs");
 const tm = require("./libSync/timing_metadata");
 const sessions = require("./libSync/sessions");
 
@@ -118,17 +119,31 @@ function editing_session_to_html(session) {
  * drag-and-ndrop. */
 
 function addFiles(paths) {
-  paths.forEach(p => tm.probe_file(p, (err, file) => {
+  paths.forEach(p => fs.stat(p, (err, stat) => {
     if (err) {
       display_error(err.message);
-    } else if (document.editing_session.add_file(file)) {
-      const fd=document.getElementById("filedisplay");
-      while (fd.firstChild) {
-        fd.removeChild(fd.lastChild);
-      }
-      fd.appendChild(editing_session_to_html(document.editing_session));
+    } else if (stat.isDirectory()) {
+      fs.readdir(p, (err, files) => {
+        if (err) {
+          display_error(err.message);
+        } else {
+          addFiles(files.map(f => path.resolve(p, f)));
+        }
+      });
     } else {
-      display_error(`skipping duplicate file: ${p}`);
+      tm.probe_file(p, (err, file) => {
+        if (err) {
+          display_error(err.message);
+        } else if (document.editing_session.add_file(file)) {
+          const fd=document.getElementById("filedisplay");
+          while (fd.firstChild) {
+            fd.removeChild(fd.lastChild);
+          }
+          fd.appendChild(editing_session_to_html(document.editing_session));
+        } else {
+          display_error(`skipping duplicate file: ${p}`);
+        }
+      });
     }
   }));
 }

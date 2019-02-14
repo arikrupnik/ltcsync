@@ -9,10 +9,6 @@ function openFiles(files) {
   mainWindow.webContents.send("addFiles", files);
 }
 
-function openDirectory(dir) {
-  // TODO
-}
-
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
@@ -29,12 +25,11 @@ function createWindow () {
                                   openFiles)
           }},
         { label: "Import entire directory",
-          enabled: false,       //
           accelerator: "CmdOrCtrl+I",
           click: function(m,w,e){
             dialog.showOpenDialog({title: "Select Directory",
                                    properties: ["openDirectory"]},
-                                  openDirectory)
+                                  openFiles)
           }},
         { label: "Export Synchronized...", enabled: false},
         { type: "separator" },
