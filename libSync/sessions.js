@@ -169,22 +169,26 @@ function $from_same_recording_session() {
     let nf=ffprobes.length;
     ffprobes[nf]=null;
     ffprobe(path, (err, f) => {
-      ffprobes[nf] = f;
-      if (ffprobes.every(e => e)) {
-        // all ffprobe processes have returned
-        assert(from_same_recording_session(ffprobes.slice(0,3)));
-        assert(!from_same_recording_session(ffprobes.slice(3)));
+      if (err) {
+        throw err;
+      } else {
+        ffprobes[nf] = f;
+        if (ffprobes.every(e => e)) {
+          // all ffprobe processes have returned
+          assert(from_same_recording_session(ffprobes.slice(0,3)));
+          assert(!from_same_recording_session(ffprobes.slice(3)));
+        }
       }
     });
   }
   l_ffprobe(path.join(__dirname,
-                      "../samples/2018-12-11/ZOOM0004_LR.WAV"));
+                      "../../samples/2018-12-11/ZOOM0004_LR.WAV"));
   l_ffprobe(path.join(__dirname,
-                      "../samples/2018-12-11/ZOOM0004_Tr1.WAV"));
+                      "../../samples/2018-12-11/ZOOM0004_Tr1.WAV"));
   l_ffprobe(path.join(__dirname,
-                      "../samples/2018-12-11/ZOOM0004_Tr2.WAV"));
+                      "../../samples/2018-12-11/ZOOM0004_Tr2.WAV"));
   l_ffprobe(path.join(__dirname,
-                      "../samples/2018-12-11/MVI_8032.MOV"));
+                      "../../samples/2018-12-11/MVI_8032.MOV"));
 }
 
 
