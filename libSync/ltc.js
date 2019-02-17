@@ -1,8 +1,8 @@
 /* ltc.js: functions for parsing timestamp data out of audio
  * streams. This implementation uses ltcdump(1) as the backend. */
 
-const child_process = require("child_process");
 const path = require("path");
+const nb = require("./native_binary");
 
 const assert = require('assert');
 
@@ -82,7 +82,7 @@ function $parse_ltcdump() {
 function ltcdump(filepath, callback) {
   let output="";
   let error="";
-  const ltcdump=child_process.spawn("ltcdump", [filepath]);
+  const ltcdump=nb.spawn("ltcdump", [filepath]);
   ltcdump.stdout.on("data", function(chunk) {
     output+=chunk.toString("ascii");
   });
@@ -120,7 +120,7 @@ function $ltcdump() {
             assert(!frames);
             assert.equal(
               err.message.trim(),
-              "Error: This is not a sndfile supported audio file format: '/non-file/'");
+              "Error: This is not a sndfile supported audio file format");
           });
 }
 

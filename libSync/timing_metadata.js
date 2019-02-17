@@ -3,12 +3,12 @@
 
 const path = require("path");
 const fs = require("fs");
-const child_process = require("child_process");
 const process = require("process");
 const os = require("os");
 
 const assert = require("assert");
 
+const nb = require("./native_binary");
 const ffprobe = require("./ffprobe").ffprobe;
 const ltc = require("./ltc");
 
@@ -30,7 +30,7 @@ function extract_ltc(ffprobe, callback) {
       for (let channel=0; channel<stream.channels; channel++) {
         audio_streams_to_process++;
         const wav_file=`${file_base}+${process.hrtime().join(".")}.${stream.index}.${channel}.wav`;
-        const ffmpeg=child_process.spawn(
+        const ffmpeg=nb.spawn(
           "ffmpeg", ["-hide_banner",
                      "-y",
                      "-loglevel", "error",

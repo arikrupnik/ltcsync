@@ -1,7 +1,7 @@
 /* ffprobe.js: extract metadata from files using ffprobe(1). */
 
 const path = require("path");
-const child_process = require("child_process");
+const nb = require("./native_binary");
 
 const assert = require('assert');
 
@@ -9,7 +9,7 @@ const assert = require('assert');
 /* runs ffprobe on file and returns {format, [stream]} */
 function ffprobe(fullpath, callback) {
   let output="";
-  const ffprobe=child_process.spawn(
+  const ffprobe=nb.spawn(
     "ffprobe", ["-hide_banner",
                 "-loglevel", "fatal",
                 "-show_error", "-show_format", "-show_streams",
@@ -31,8 +31,7 @@ function ffprobe(fullpath, callback) {
 function $ffprobe() {
   ffprobe("/non-file/",
           (err, f) => {
-            assert.equal(err.message,
-                         "No such file or directory");
+            assert(["No such file or directory", "Invalid argument"].indexOf(err.message) >= 0);
           });
   const filename = "../../samples/counter24+ltc.mp4"
   ffprobe(path.join(__dirname, filename),
@@ -56,8 +55,10 @@ function $ffprobe() {
             assert.equal(f.streams[0].time_base, "1/12288");
             assert.equal(f.streams[0].start_pts, 0);
             assert.equal(f.streams[0].start_time, "0.000000");
-            assert.equal(f.streams[0].duration_ts, 65544);
-            assert.equal(f.streams[0].duration, "5.333984");
+            //assert.equal(f.streams[0].duration_ts, 65544);   // sic in 4.0.2
+            //assert.equal(f.streams[0].duration, "5.333984"); // sic in 4.0.2
+            assert.equal(f.streams[0].duration_ts, 65536);     // sic in 4.1.1
+            assert.equal(f.streams[0].duration, "5.333333");   // sic in 4.1.1
             assert.equal(f.streams[0].nb_frames, "128");
             assert(Math.abs(eval(f.streams[0].time_base) *
                             eval(f.streams[0].duration_ts) -
