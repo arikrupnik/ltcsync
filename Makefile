@@ -5,10 +5,9 @@
 all: native_binaries tests
 
 tests: libSync/native_binary.run \
-	libSync/ffprobe.run \
 	libSync/ltc.run \
-	libSync/sessions.run \
-	libSync/timing_metadata.run
+	libSync/media_file.run \
+	libSync/sessions.run
 
 %.run: %.js
 	node $<

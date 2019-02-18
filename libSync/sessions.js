@@ -1,10 +1,10 @@
 
 
 const path = require("path");
-const assert = require("assert");
-const tm = require("./timing_metadata");
+const mf = require("./media_file");
 
-const ffprobe = require("./ffprobe").ffprobe;
+const assert = require("assert");
+
 
 /* A group of files that overlap temporally. Users typically want to
  * synchronize files in a group to the same timeline. Conversely,
@@ -17,44 +17,53 @@ FileGroup.prototype.bounds = function() {
   if (!this.files.length) {
     return null;
   } else {
-    const files_with_ltc = this.files.filter(f => f.ltc);
+    const files_with_ltc = this.files.filter(f => f.bounds().start);
     if (!files_with_ltc.length) {
-      return new tm.Bounds(
+      return new mf.Bounds(
         null,
-        this.files.map(f => eval(f.ffprobe.format.duration)).reduce((acc, d) => Math.max(acc, d)));
+        this.files.map(f => f.bounds().duration).reduce((acc, d) => Math.max(acc, d)));
     } else {
-      return files_with_ltc.map(
-        f=>f.ltc.bounds).reduce(
-          (acc, t) =>
-            new tm.Bounds(
-              Math.min(acc.start, t.start),
-              Math.max(acc.end, t.end)))
+      return files_with_ltc.map(f=>f.bounds()).reduce((acc, b) => acc.union(b));
     }
   }
 }
 function $FileGroup$bounds() {
   const group_with_ltc = new FileGroup();
   group_with_ltc.files = [
-    {ltc: {bounds: new tm.Bounds(1, 3)}},
-    {ltc: {bounds: new tm.Bounds(2, 4)}},
+    new mf.MediaFile({format: {duration: "2"}}, {start_time: 1}),
+    new mf.MediaFile({format: {duration: "2"}}, {start_time: 2}),
   ];
-  assert.equal(group_with_ltc.bounds().start, 1);
-  assert.equal(group_with_ltc.bounds().end, 4);
-  assert.equal(group_with_ltc.bounds().duration(), 3);
+  assert.deepEqual(group_with_ltc.bounds(), new mf.Bounds(1, 3));
 
   const group_without_ltc = new FileGroup();
   group_without_ltc.files = [
-    {ffprobe: {format: {duration: "2"}}},
-    {ffprobe: {format: {duration: "1"}}},
+    new mf.MediaFile({format: {duration: "2"}}, null),
+    new mf.MediaFile({format: {duration: "1"}}, null),
   ];
-  assert.equal(group_without_ltc.bounds().start, null);
-  assert.equal(group_without_ltc.bounds().end, 2);
-  assert.equal(group_without_ltc.bounds().duration(), 2);
+  assert.deepEqual(group_without_ltc.bounds(), new mf.Bounds(null, 2));
+}
+FileGroup.prototype.compare = function(group) {
+  return this.bounds().start-group.bounds().start;
+}
+function $FileGroup$compare() {
+  const g0 = new FileGroup();
+  g0.files = [
+    new mf.MediaFile({format: {duration: "2"}}, {start_time: 1}),
+    new mf.MediaFile({format: {duration: "2"}}, {start_time: 2}),
+  ];
+  const g1 = new FileGroup();
+  g1.files = [
+    new mf.MediaFile({format: {duration: "2"}}, {start_time: 2}),
+    new mf.MediaFile({format: {duration: "2"}}, {start_time: 3}),
+  ];
+  assert(g0.compare(g1) < 0);
+  assert(g1.compare(g0) > 0);
 }
 FileGroup.prototype.add_file = function(file) {
   this.files.push(file);
   return this;
 }
+
 
 /* The state of a user-visible editing environment */
 function EditingSession() {
@@ -70,12 +79,20 @@ EditingSession.prototype.all_files = function() {
 EditingSession.prototype.add_file = function(file) {
   if (this.all_files().find(
     f => f.ffprobe.format.filename===file.ffprobe.format.filename)) {
+    // file has already been added
     return false;
-  } else if (!file.ltc) {
-    this.non_ltc_files.add_file(file);
-    return file;
+  } else if (file.bounds().start===null) {
+    // maybe a file from the same recording already exists in this session
+    const related_ltc_file = this.all_files().find(f => f.ltc && f.from_same_recording_session(file));
+    if (related_ltc_file) {
+      file.ltc_file = related_ltc_file;
+      return this.add_file(file);
+    } else {
+      this.non_ltc_files.add_file(file);
+      return file;
+    }
   } else {
-    const overlaps_with = this.groups.filter(g => g.bounds().overlap(file.ltc.bounds));
+    const overlaps_with = this.groups.filter(g => g.bounds().overlap(file.bounds()));
     if (overlaps_with.length==0) {
       this.groups.push((new FileGroup()).add_file(file));
     } else if (overlaps_with.length==1) {
@@ -94,112 +111,127 @@ EditingSession.prototype.add_file = function(file) {
       this.groups = this.groups.filter(g => g);
       conjunction.add_file(file);
     }
+    // if this file is from the same recording session as some existing, non-ltc files, refile them
+    const related_files = this.non_ltc_files.files.filter(f => f.from_same_recording_session(file));
+    if (related_files.length) {
+      this.non_ltc_files.files = this.non_ltc_files.files.filter(f => !f.from_same_recording_session(file));
+      related_files.forEach(f => {
+        f.ltc_file = file;
+        this.add_file(f);
+      });
+    }
     return file;
   }
 }
 function $EditingSession$add_file() {
-  function stub_file(name, start, end) {
-    return {
-      ffprobe: {format: {filename: name}},
-      ltc: {bounds: new tm.Bounds(start, end)}
-    };
+  function stub_file(name, start, duration) {
+    return new mf.MediaFile(
+      {format: {filename: name, duration: duration}, streams: []},
+      {start_time: start});
   }
   const e = new EditingSession();
   assert.equal(e.groups.length, 0);
   assert.equal(e.all_files().length, 0);
 
-  assert(e.add_file(stub_file("one.mp4", 1, 3)));
+  // first file, goes to its own group
+  assert(e.add_file(stub_file("one.mp4", 1, 2)));
   assert.equal(e.groups.length, 1);
   assert.equal(e.groups[0].files.length, 1);
-  assert.deepEqual(e.groups[0].bounds(), new tm.Bounds(1, 3));
+  assert.deepEqual(e.groups[0].bounds(), new mf.Bounds(1, 2));
   assert.equal(e.all_files().length, 1);
 
-  assert(e.add_file(stub_file("two.mp4", 4, 5)));
+  // non-overlapping, goes to its own group
+  assert(e.add_file(stub_file("two.mp4", 4, 1)));
   assert.equal(e.groups.length, 2);
   assert.equal(e.groups[1].files.length, 1);
-  assert.deepEqual(e.groups[1].bounds(), new tm.Bounds(4, 5));
+  assert.deepEqual(e.groups[1].bounds(), new mf.Bounds(4, 1));
   assert.equal(e.all_files().length, 2);
 
-  assert(e.add_file(stub_file("three.mp4", 2, 3.5)));
+  // overlaps with "one.mp4", goes to that group
+  assert(e.add_file(stub_file("three.mp4", 2, 1.5)));
   assert.equal(e.groups.length, 2);
   assert.equal(e.groups[0].files.length, 2);
-  assert.deepEqual(e.groups[0].bounds(), new tm.Bounds(1, 3.5));
+  assert.deepEqual(e.groups[0].bounds(), new mf.Bounds(1, 2.5));
   assert.equal(e.all_files().length, 3);
 
-  assert(e.add_file(stub_file("four.mp4", 2, 4)));
+  // bridges both groups
+  assert(e.add_file(stub_file("four.mp4", 2, 2)));
   assert.equal(e.groups.length, 1);
   assert.equal(e.groups[0].files.length, 4);
-  assert.deepEqual(e.groups[0].bounds(), new tm.Bounds(1, 5));
+  assert.deepEqual(e.groups[0].bounds(), new mf.Bounds(1, 4));
   assert.equal(e.all_files().length, 4);
 
   // attempting to add a file that already exists modifies nothing and
   // returns false
-  assert(!e.add_file(stub_file("four.mp4", 2, 4)));
+  assert(!e.add_file(stub_file("four.mp4", 2, 2)));
 
   // adding a file with no LTC frames
-  assert(e.add_file({ffprobe: {format: {filename: "non-ltc.mov"}}, ltc: null}));
+  assert(e.add_file(new mf.MediaFile({format: {filename: "non-ltc.mov"}}, null)));
+
   // nothing has changed in the LTC groups...
   assert.equal(e.groups.length, 1);
   assert.equal(e.groups[0].files.length, 4);
-  assert.deepEqual(e.groups[0].bounds(), new tm.Bounds(1, 5));
+  assert.deepEqual(e.groups[0].bounds(), new mf.Bounds(1, 4));
   // ..but overall file count has gone up
   assert.equal(e.all_files().length, 5);
   // and this file ends up in the approapriate group:
   assert.equal(e.non_ltc_files.files.length, 1);
-}
 
+  // files from one recording session group together
+  mf.probe_file(path.join(__dirname, "../../samples/2018-12-11/ZOOM0004_LR.WAV"), (err, z_lr) => {
+    assert(!err);
+    assert(!z_lr.bounds().start);
+    mf.probe_file(path.join(__dirname, "../../samples/2018-12-11/ZOOM0004_Tr1.WAV"), (err, z_tr1) => {
+      assert(!err);
+      assert(z_tr1.bounds().start);
+      mf.probe_file(path.join(__dirname, "../../samples/2018-12-11/ZOOM0004_Tr2.WAV"), (err, z_tr2) => {
+        assert(!err);
+        assert(!z_tr2.bounds().start);
 
-/* Some audio recorders, e.g., ZOOM, record multiple tracks from the
- * same session in separate files. */
-function from_same_recording_session(ffprobes) {
-  for (let f of ffprobes) {
-    if (f.streams.length!=1 ||
-        f.streams[0].codec_type!="audio" ||
-        f.streams[0].duration_ts!=ffprobes[0].streams[0].duration_ts) {
-      return false;
-    }
-    return true;
-  }
-}
-
-function $from_same_recording_session() {
-  let ffprobes = [];
-
-  function l_ffprobe(path) {
-    let nf=ffprobes.length;
-    ffprobes[nf]=null;
-    ffprobe(path, (err, f) => {
-      if (err) {
-        throw err;
-      } else {
-        ffprobes[nf] = f;
-        if (ffprobes.every(e => e)) {
-          // all ffprobe processes have returned
-          assert(from_same_recording_session(ffprobes.slice(0,3)));
-          assert(!from_same_recording_session(ffprobes.slice(3)));
-        }
-      }
+        // add file with LTC first
+        const e = new EditingSession();
+        e.add_file(z_tr1);
+        e.add_file(z_tr2);
+        e.add_file(z_lr);
+        // all three files end up in one group
+        assert.equal(e.groups.length, 1);
+        assert.equal(e.groups[0].files.length, 3);
+        // and none end up in NON-LTC group, even though only tr1 has actual ltc
+        assert.equal(e.non_ltc_files.files.length, 0);
+      });
     });
-  }
-  l_ffprobe(path.join(__dirname,
-                      "../../samples/2018-12-11/ZOOM0004_LR.WAV"));
-  l_ffprobe(path.join(__dirname,
-                      "../../samples/2018-12-11/ZOOM0004_Tr1.WAV"));
-  l_ffprobe(path.join(__dirname,
-                      "../../samples/2018-12-11/ZOOM0004_Tr2.WAV"));
-  l_ffprobe(path.join(__dirname,
-                      "../../samples/2018-12-11/MVI_8032.MOV"));
+  });
+  mf.probe_file(path.join(__dirname, "../../samples/2018-12-11/ZOOM0004_LR.WAV"), (err, z_lr) => {
+    assert(!err);
+    assert(!z_lr.bounds().start);
+    mf.probe_file(path.join(__dirname, "../../samples/2018-12-11/ZOOM0004_Tr1.WAV"), (err, z_tr1) => {
+      assert(!err);
+      assert(z_tr1.bounds().start);
+      mf.probe_file(path.join(__dirname, "../../samples/2018-12-11/ZOOM0004_Tr2.WAV"), (err, z_tr2) => {
+        assert(!err);
+        assert(!z_tr2.bounds().start);
+
+        // add file with LTC last
+        const e = new EditingSession();
+        e.add_file(z_tr2);
+        e.add_file(z_lr);
+        e.add_file(z_tr1);
+        // all three files end up in one group
+        assert.equal(e.groups.length, 1);
+        assert.equal(e.groups[0].files.length, 3);
+        // and none end up in NON-LTC group, even though only tr1 has actual ltc
+        assert.equal(e.non_ltc_files.files.length, 0);
+      });
+    });
+  });
 }
-
-
 
 
 if (require.main === module) {
   $FileGroup$bounds();
+  $FileGroup$compare();
   $EditingSession$add_file();
-  $from_same_recording_session();
 } else {
   module.exports.FileGroup = FileGroup;
   module.exports.EditingSession = EditingSession;
-  module.exports.from_same_recording_session = from_same_recording_session;
 }

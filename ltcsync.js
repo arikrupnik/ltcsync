@@ -2,7 +2,7 @@
 const electron=require("electron");
 const path = require("path");
 const fs = require("fs");
-const tm = require("./libSync/timing_metadata");
+const mf = require("./libSync/media_file");
 const sessions = require("./libSync/sessions");
 
 /* Housekeeping */
@@ -25,7 +25,7 @@ function longest_bounds(editing_session) {
         editing_session.groups.concat(editing_session.non_ltc_files) :
         editing_session.groups;
   return all_groups.map(
-    g => g.bounds().duration()).reduce(
+    g => g.bounds().duration).reduce(
       (acc, v) => Math.max(acc, v), 0);
 }
 
@@ -51,8 +51,8 @@ function file_to_html(file, group_bounds) {
   const e=document.createElement("tr");
 
   e.appendChild(document.createElement("td"));
-  if (file.ltc) {
-    e.lastChild.innerHTML=pretty_time(file.ltc.bounds.start);
+  if (file.bounds().start) {
+    e.lastChild.innerHTML=pretty_time(file.bounds().start);
   }
   e.appendChild(document.createElement("td")).innerHTML=pretty_time(eval(file.ffprobe.format.duration));
 
@@ -62,7 +62,7 @@ function file_to_html(file, group_bounds) {
   fn.innerHTML = path.basename(file.ffprobe.format.filename);
   const lb=longest_bounds(document.editing_session);
   const width=eval(file.ffprobe.format.duration)/lb;
-  const margin_left=(file.ltc && group_bounds) ? (file.ltc.bounds.start-group_bounds.start)/lb : 0;
+  const margin_left=(file.bounds().start && group_bounds) ? (file.bounds().start-group_bounds.start)/lb : 0;
   fn.setAttribute("style", `width: ${width*100}%; margin-left: ${margin_left*100}%`);
   
   return e;
@@ -74,9 +74,9 @@ function file_group_to_html(group) {
   const h=e.appendChild(document.createElement("tr"));
   h.setAttribute("class", "group-header");
   h.appendChild(document.createElement("td")).innerHTML=pretty_time(group.bounds().start);
-  h.appendChild(document.createElement("td")).innerHTML=pretty_time(group.bounds().duration());
+  h.appendChild(document.createElement("td")).innerHTML=pretty_time(group.bounds().duration);
   h.appendChild(document.createElement("th")).innerHTML=`Group of ${group.files.length} overlapping files`;
-  const sorted_files=group.files.slice().sort((f0, f1) => f0.ltc.bounds.start - f1.ltc.bounds.start);
+  const sorted_files=group.files.slice().sort((f0, f1) => f0.compare(f1));
   sorted_files.forEach(f => e.appendChild(file_to_html(f, group.bounds())));
 
   return e;
@@ -115,13 +115,13 @@ function editing_session_to_html(session) {
   h.appendChild(document.createElement("th")).innerHTML="Duration";
   h.appendChild(document.createElement("th")).innerHTML="File notes";
   
-  session.groups.filter(g => g.files.length>1).sort((g0, g1) => g0.bounds().start-g1.bounds().start).forEach(g => {
+  session.groups.filter(g => g.files.length>1).sort((g0, g1) => g0.compare(g1)).forEach(g => {
     e.appendChild(file_group_to_html(g));
     e.appendChild(document.createElement("tbody")).appendChild(document.createElement("tr")).appendChild(document.createElement("td"));
     e.lastChild.setAttribute("class", "dummy-spacer");
   });
 
-  const nonoverlapping_groups=session.groups.filter(g => g.files.length==1).sort((g0, g1) => g0.bounds().start-g1.bounds().start);
+  const nonoverlapping_groups=session.groups.filter(g => g.files.length==1).sort((g0, g1) => g0.compare(g1));
   if (nonoverlapping_groups.length) {
     e.appendChild(nonoverlapping_groups_to_html(nonoverlapping_groups));
     e.appendChild(document.createElement("tbody")).appendChild(document.createElement("tr")).appendChild(document.createElement("td"));
@@ -151,7 +151,7 @@ function addFiles(paths) {
         }
       });
     } else {
-      tm.probe_file(p, (err, file) => {
+      mf.probe_file(p, (err, file) => {
         if (err) {
           display_error(err.message);
         } else if (document.editing_session.add_file(file)) {
