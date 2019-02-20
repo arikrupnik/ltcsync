@@ -78,7 +78,37 @@ libSync/%-bin/ltcdump:
 	mkdir -p $(@D)
 	unzip -o    $(DOWNLOAD_DIR)/$(notdir $(@D))-ltcdump.zip $(@F) -d $(@D)
 
+
+# electron distributions
+
+electron: build/LTCsync-win32-x64.zip \
+	build/LTCsync-win32-ia32.zip \
+	build/LTCsync-darwin-x64.zip \
+	build/LTCsync-linux-x64.zip \
+	build/LTCsync-linux-ia32.zip
+
+build/LTCsync-win32-x64.zip:
+	electron-packager . --out build --overwrite --ignore 'downloads' --ignore 'libSync/.*-.*-bin' --platform win32  --arch x64
+	cp -r libSync/win32-x64-bin  $(basename $@)/resources/app/libSync/
+	cd build; zip -r ../$@ $(notdir $(basename $@))
+build/LTCsync-win32-ia32.zip:
+	electron-packager . --out build --overwrite --ignore 'downloads' --ignore 'libSync/.*-.*-bin' --platform win32  --arch ia32
+	cp -r libSync/win32-ia32-bin $(basename $@)/resources/app/libSync/
+	cd build; zip -r ../$@ $(notdir $(basename $@))
+build/LTCsync-darwin-x64.zip:
+	electron-packager . --out build --overwrite --ignore 'downloads' --ignore 'libSync/.*-.*-bin' --platform darwin --arch x64
+	cp -r libSync/darwin-x64-bin $(basename $@)/LTCsync.app/Contents/Resources/app/libSync/
+	cd build; zip -r ../$@ $(notdir $(basename $@))
+build/LTCsync-linux-x64.zip:
+	electron-packager . --out build --overwrite --ignore 'downloads' --ignore 'libSync/.*-.*-bin' --platform linux  --arch x64
+	cp -r libSync/linux-x64-bin  $(basename $@)/resources/app/libSync/
+	cd build; zip -r ../$@ $(notdir $(basename $@))
+build/LTCsync-linux-ia32.zip:
+	electron-packager . --out build --overwrite --ignore 'downloads' --ignore 'libSync/.*-.*-bin' --platform linux  --arch ia32
+	cp -r libSync/linux-ia32-bin $(basename $@)/resources/app/libSync/
+	cd build; zip -r ../$@ $(notdir $(basename $@))
+
 clean:
-	rm -rf $(DOWNLOAD_DIR) libSync/*-bin/
+	rm -rf $(DOWNLOAD_DIR) build libSync/*-bin/
 
 .PHONY: clean

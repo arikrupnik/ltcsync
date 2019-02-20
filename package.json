@@ -5,8 +5,16 @@
   "main": "index.js",
   "scripts": {
     "start": "electron .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "make tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arikrupnik/ltcsync.git"
   },
   "author": "Iterative Features",
-  "license": "GPL-3.0"
+  "license": "GPL-3.0",
+  "devDependencies": {
+    "electron": "^3.0.0",
+    "electron-packager": ">=13.1.0"
+  }
 }
