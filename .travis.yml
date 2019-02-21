@@ -1,0 +1,23 @@
+language: node_js
+
+os:
+  - linux
+  - osx
+#  - windows  # detailed description in https://github.com/arikrupnik/ltcsync/issues/8
+
+
+node_js:
+  - "lts/*"
+
+addons:
+  homebrew:
+    packages:
+    - gnu-tar
+
+before_install:
+  # mingw is in the image, but missing from the PATH; need xz.exe for tar -xvJf
+  - if [ $TRAVIS_OS_NAME = windows ]; then export PATH=$PATH:/mingw64/bin; fi
+  # mingw comes without a make.exe by default
+  - if [ $TRAVIS_OS_NAME = windows ]; then cp $(which mingw32-make.exe) $(dirname $(which mingw32-make.exe))/make.exe; fi
+  # hombrew installs gnu-tar as gtar
+  - if [ $TRAVIS_OS_NAME = osx ]; then export PATH="/usr/local/opt/gnu-tar/libexec/gnubin:$PATH"; fi

@@ -56,7 +56,7 @@ function $parse_ltcdump_frame() {
  * return an array of decoded ltc frames */
 function parse_ltcdump(text) {
   let frames=[];
-  for (let line of text.split("\n")) { // do I need to account for \r\n on windows?
+  for (let line of text.split("\n")) {
     if (line && line.charAt(0) != "#") {
       frames.push(parse_ltcdump_frame(line));
     }
@@ -100,7 +100,7 @@ function ltcdump(filepath, callback) {
 }
 
 function $ltcdump() {
-  ltcdump(path.join(__dirname, "../../samples/ltc.wav"),
+  ltcdump(path.join(__dirname, "../build/samples/ltc.wav"),
           function(err, frames) {
             assert(!err);
             assert.equal(frames.length, 143);
@@ -169,27 +169,27 @@ function framerate(frames, sample_rate) {
 
 function $framerate() {
   ltcdump(path.join(__dirname,
-                    "../../samples/2018-12-11/ZOOM0004_Tr1.WAV"),
+                    "../build/samples/ZOOM0004_Tr1.WAV"),
           (err, frames) => assert.equal(framerate(frames, 48000), 24));
   ltcdump(path.join(__dirname,
-                    "../../samples/elteesee/LTC_00_58_00_00__1mins_23976.wav"),
+                    "../build/samples/LTC_00_58_00_00__1mins_23976.wav"),
           (err, frames) => assert.equal(framerate(frames, 48000), 24/1.001));
   ltcdump(path.join(__dirname,
-                    "../../samples/elteesee/LTC_00_58_00_00__1mins_24.wav"),
+                    "../build/samples/LTC_00_58_00_00__1mins_24.wav"),
           (err, frames) => assert.equal(framerate(frames, 48000), 24));
   ltcdump(path.join(__dirname,
-                    "../../samples/elteesee/LTC_00_58_00_00__1mins_25.wav"),
+                    "../build/samples/LTC_00_58_00_00__1mins_25.wav"),
           (err, frames) => assert.equal(framerate(frames, 48000), 25));
   // this file appears to have 30fps frames, although with DF flags
   // set and correctly omitting initial frames in a minute
   //ltcdump(path.join(__dirname,
-  //                  "../../samples/elteesee/LTC_00_58_00_00__1mins_2997_df.wav"),
+  //                  "../build/samples/LTC_00_58_00_00__1mins_2997_df.wav"),
   //        (err, frames) => assert.equal(framerate(frames, 48000), 30/1.001));
   ltcdump(path.join(__dirname,
-                    "../../samples/elteesee/LTC_00_58_00_00__1mins_2997_ndf.wav"),
+                    "../build/samples/LTC_00_58_00_00__1mins_2997_ndf.wav"),
           (err, frames) => assert.equal(framerate(frames, 48000), 30/1.001));
   ltcdump(path.join(__dirname,
-                    "../../samples/elteesee/LTC_00_58_00_00__1mins_30.wav"),
+                    "../build/samples/LTC_00_58_00_00__1mins_30.wav"),
           (err, frames) => assert.equal(framerate(frames, 48000), 30));
 }
 

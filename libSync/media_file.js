@@ -108,13 +108,13 @@ MediaFile.prototype.from_same_recording_session = function(file) {
     ff0.streams[0].duration_ts===ff1.streams[0].duration_ts;
 }
 function $MediaFile$from_same_recording_session() {
-  probe_file(path.join(__dirname, "../../samples/2018-12-11/ZOOM0004_LR.WAV"), (err, z_lr) => {
+  probe_file(path.join(__dirname, "../build/samples/ZOOM0004_LR.WAV"), (err, z_lr) => {
     assert(!err);
-    probe_file(path.join(__dirname, "../../samples/2018-12-11/ZOOM0004_Tr1.WAV"), (err, z_tr1) => {
+    probe_file(path.join(__dirname, "../build/samples/ZOOM0004_Tr1.WAV"), (err, z_tr1) => {
       assert(!err);
-      probe_file(path.join(__dirname, "../../samples/2018-12-11/ZOOM0004_Tr2.WAV"), (err, z_tr2) => {
+      probe_file(path.join(__dirname, "../build/samples//ZOOM0004_Tr2.WAV"), (err, z_tr2) => {
         assert(!err);
-        probe_file(path.join(__dirname, "../../samples/ltc.wav"), (err, ltc) => {
+        probe_file(path.join(__dirname, "../build/samples/ltc.wav"), (err, ltc) => {
           assert(!err);
           assert(z_lr.from_same_recording_session(z_tr1));
           assert(z_lr.from_same_recording_session(z_tr2));
@@ -175,7 +175,7 @@ function $ffprobe() {
           (err, f) => {
             assert(["No such file or directory", "Invalid argument"].indexOf(err.message) >= 0);
           });
-  const filename = "../../samples/counter24+ltc.mp4"
+  const filename = "../build/samples/counter24+ltc.mp4"
   ffprobe(path.join(__dirname, filename),
           (err, f) => {
             assert(!err);
@@ -281,7 +281,7 @@ function extract_ltc(ffprobe, callback) {
 
 function $extract_ltc() {
   ffprobe(path.join(__dirname,
-                    "../../samples/counter24+ltc.mp4"),
+                    "../build/samples/counter24+ltc.mp4"),
           (err, f) => {
             assert(!err);
             extract_ltc(f, (e, f, framesets) => {
@@ -297,15 +297,16 @@ function $extract_ltc() {
           });
 
   // this file has no audio streams
-  ffprobe(path.join(__dirname,
-                    "../../samples/2018-12-12/card1-scarlet-29.97/A001_C037_12121V.mov"),
+  /*ffprobe(path.join(__dirname,
+                    // missing file
+                    "../build/samples/A001_C037_12121V.mov"),
           (err, f) => {
             assert(!err);
             extract_ltc(f, (e, f, framesets) => {
               assert(!e);
               assert.equal(framesets.length, 0);
             });
-          });
+          });*/
 }
 
 /* select best LTC frame set */
@@ -328,40 +329,41 @@ function choose_ltc(ffprobe, framesets) {
 
 function $choose_ltc() {
   ffprobe(path.join(__dirname,
-                    "../../samples/counter24+ltc.mp4"),
+                    "../build/samples/counter24+ltc.mp4"),
           (err, f) => {
             extract_ltc(f, (e, f, framesets) => {
               assert.equal(choose_ltc(f, framesets).frames.length, 127);
             })
           });
   ffprobe(path.join(__dirname,
-                    "../../samples/2018-12-11/ZOOM0004_Tr1.WAV"),
+                    "../build/samples/ZOOM0004_Tr1.WAV"),
           (err, f) => {
             extract_ltc(f, (e, f, framesets) => {
               assert.equal(choose_ltc(f, framesets).frames.length, 316);
             })
           });
   ffprobe(path.join(__dirname,
-                    "../../samples/2018-12-11/ZOOM0004_LR.WAV"),
+                    "../build/samples/ZOOM0004_LR.WAV"),
           (err, f) => {
             extract_ltc(f, (e, f, framesets) => {
               assert.equal(choose_ltc(f, framesets).frames, null);
             })
           });
   ffprobe(path.join(__dirname,
-                    "../../samples/2018-12-11/ZOOM0004_Tr2.WAV"),
+                    "../build/samples/ZOOM0004_Tr2.WAV"),
           (err, f) => {
             extract_ltc(f, (e, f, framesets) => {
               assert.equal(choose_ltc(f, framesets).frames, null);
             })
           });
-  ffprobe(path.join(__dirname,
-                    "../../samples/2018-12-12/card1-scarlet-29.97/A001_C037_12121V.mov"),
+  /*ffprobe(path.join(__dirname,
+                    // missing file
+                    "../build/samples/A001_C037_12121V.mov"),
           (err, f) => {
             extract_ltc(f, (e, f, framesets) => {
               assert.equal(choose_ltc(f, framesets).frames, null);
             })
-          });
+          });*/
 }
 
 function container_start_time(ffstream, ltc_frames) {
@@ -391,7 +393,7 @@ function $container_start_time() {
                       null];
   assert.equal(container_start_time(ffstream, ltc_frames), 3600-10-1);
   ffprobe(path.join(__dirname,
-                    "../../samples/counter24+ltc.mp4"),
+                    "../build/samples/counter24+ltc.mp4"),
           (err, ffprobe) => {
             extract_ltc(ffprobe, (err, ffprobe, framesets) => {
               let {stream, frames} = choose_ltc(ffprobe, framesets);
@@ -401,7 +403,7 @@ function $container_start_time() {
             });
           });
   ffprobe(path.join(__dirname,
-                            "../../samples/2018-12-11/ZOOM0004_Tr1.WAV"),
+                            "../build/samples/ZOOM0004_Tr1.WAV"),
           (err, ffprobe) => {
             extract_ltc(ffprobe, (err, ffprobe, framesets) => {
               let {stream, frames} = choose_ltc(ffprobe, framesets);
@@ -441,26 +443,27 @@ function probe_file(filename, callback) {
 
 function $probe_file() {
   probe_file(path.join(__dirname,
-                            "../../samples/counter24+ltc.mp4"),
+                            "../build/samples/counter24+ltc.mp4"),
              (e, file) => {
                assert.deepEqual(file.bounds(), new Bounds(17373.495791666668, 5.355));
              });
   probe_file(path.join(__dirname,
-                       "../../samples/2018-12-11/ZOOM0004_Tr1.WAV"),
+                       "../build/samples/ZOOM0004_Tr1.WAV"),
              (e, file) => {
                assert.deepEqual(file.bounds(), new Bounds(66857.09902083334, 13.201333));
              });
   probe_file(path.join(__dirname,
-                       "../../samples/2018-12-11/ZOOM0004_Tr2.WAV"),
+                       "../build/samples/ZOOM0004_Tr2.WAV"),
              (e, file) => {
                assert.equal(file.ltc, null);
                assert.deepEqual(file.bounds(), new Bounds(null, 13.201333));
              });
-  probe_file(path.join(__dirname,
-                       "../../samples/2018-12-12/card1-scarlet-29.97/A001_C037_12121V.mov"),
+  /*probe_file(path.join(__dirname,
+                       // missing file
+                       "../build/samples/A001_C037_12121V.mov"),
              (e, file) => {
                assert.equal(file.ltc, null);
-             });
+             });*/
 }
 
 if (require.main === module) {

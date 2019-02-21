@@ -2,9 +2,11 @@
 
 # default target: run tests
 
-all: native_binaries tests
+all: tests
 
-tests: libSync/native_binary.run \
+tests: native_binaries \
+	build/samples \
+	libSync/native_binary.run \
 	libSync/ltc.run \
 	libSync/media_file.run \
 	libSync/sessions.run
@@ -12,9 +14,9 @@ tests: libSync/native_binary.run \
 %.run: %.js
 	node $<
 
-native_binaries: ffmpeg ltcdump
+native_binaries: ltcdump ffmpeg
 
-DOWNLOAD_DIR = downloads
+DOWNLOAD_DIR = build/downloads
 
 # ffmpeg binaries:
 
@@ -34,14 +36,14 @@ libSync/win32-%-bin/ffmpeg.exe:
 	mkdir -p $(DOWNLOAD_DIR)
 	wget -nv -O $(DOWNLOAD_DIR)/$(notdir $(@D))-ffmpeg.zip $(URL)
 	mkdir -p $(@D)
-	unzip -o -j $(DOWNLOAD_DIR)/$(notdir $(@D))-ffmpeg.zip '*/ffmpeg.exe'  -d $(@D)
-	unzip -o -j $(DOWNLOAD_DIR)/$(notdir $(@D))-ffmpeg.zip '*/ffprobe.exe' -d $(@D)
+	unzip -o -j $(DOWNLOAD_DIR)/$(notdir $(@D))-ffmpeg.zip '*/bin/ffmpeg.exe'  -d $(@D)
+	unzip -o -j $(DOWNLOAD_DIR)/$(notdir $(@D))-ffmpeg.zip '*/bin/ffprobe.exe' -d $(@D)
 libSync/darwin-x64-bin/ffmpeg:
 	mkdir -p $(DOWNLOAD_DIR)
 	wget -nv -O $(DOWNLOAD_DIR)/$(notdir $(@D))-ffmpeg.zip $(URL)
 	mkdir -p $(@D)
-	unzip -o -j $(DOWNLOAD_DIR)/$(notdir $(@D))-ffmpeg.zip '*/ffmpeg'  -d $(@D)
-	unzip -o -j $(DOWNLOAD_DIR)/$(notdir $(@D))-ffmpeg.zip '*/ffprobe' -d $(@D)
+	unzip -o -j $(DOWNLOAD_DIR)/$(notdir $(@D))-ffmpeg.zip '*/bin/ffmpeg'  -d $(@D)
+	unzip -o -j $(DOWNLOAD_DIR)/$(notdir $(@D))-ffmpeg.zip '*/bin/ffprobe' -d $(@D)
 libSync/linux-%-bin/ffmpeg:
 	mkdir -p $(DOWNLOAD_DIR)
 	wget -nv -O $(DOWNLOAD_DIR)/$(notdir $(@D))-ffmpeg.tar.xz $(URL)
@@ -78,10 +80,17 @@ libSync/%-bin/ltcdump:
 	mkdir -p $(@D)
 	unzip -o    $(DOWNLOAD_DIR)/$(notdir $(@D))-ltcdump.zip $(@F) -d $(@D)
 
+# sample media files
+build/samples:
+	mkdir -p $(DOWNLOAD_DIR)
+	wget -nv -O $(DOWNLOAD_DIR)/samples.zip https://github.com/arikrupnik/ltcsync/releases/download/0.1.0/samples.zip
+	cd build; unzip $(notdir $(DOWNLOAD_DIR))/samples.zip
+
 
 # electron distributions
 
-electron: build/LTCsync-win32-x64.zip \
+electron: tests \
+	build/LTCsync-win32-x64.zip \
 	build/LTCsync-win32-ia32.zip \
 	build/LTCsync-darwin-x64.zip \
 	build/LTCsync-linux-x64.zip \
@@ -109,6 +118,6 @@ build/LTCsync-linux-ia32.zip:
 	cd build; zip -r ../$@ $(notdir $(basename $@))
 
 clean:
-	rm -rf $(DOWNLOAD_DIR) build libSync/*-bin/
+	rm -rf build libSync/*-bin/
 
 .PHONY: clean

@@ -33,16 +33,30 @@ function spawn(command, args, options) {
   return cp.spawn(binary_path(command), args, options);
 }
 function $spawn() {
-  let output="";
-  const proc=spawn("ltcdump", ["--version"]);
-  proc.stdout.on("data", chunck => output+=chunck);
-  proc.on("close", code => {
+  let l_output="";
+  const l_proc=spawn("ltcdump", ["--version"]);
+  l_proc.stdout.on("data", chunck => l_output+=chunck);
+  l_proc.on("close", code => {
     assert.equal(code, 0);
-    assert.equal(output.split("\n")[0], "ltcdump version 0.7.0");
+    assert.equal(l_output.split("\n")[0].trim(), "ltcdump version 0.7.0");
+  });
+
+  let fm_output="";
+  const fm_proc=spawn("ffmpeg", ["-version"]);
+  fm_proc.stdout.on("data", chunck => fm_output+=chunck);
+  fm_proc.on("close", code => {
+    assert.equal(code, 0);
+    assert(fm_output.split("\n")[0].startsWith("ffmpeg version 4.1"));
+  });
+
+  let fp_output="";
+  const fp_proc=spawn("ffprobe", ["-version"]);
+  fp_proc.stdout.on("data", chunck => fp_output+=chunck);
+  fp_proc.on("close", code => {
+    assert.equal(code, 0);
+    assert(fp_output.split("\n")[0].startsWith("ffprobe version 4.1"));
   });
 }
-
-
 
 if (require.main === module) {
   $platform_support();
