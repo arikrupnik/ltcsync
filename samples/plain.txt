@@ -1,0 +1,1 @@
+ffmpeg interprets text files as ASCII art

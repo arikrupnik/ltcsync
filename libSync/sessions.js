@@ -65,6 +65,21 @@ FileGroup.prototype.add_file = function(file) {
 }
 
 
+/* Returns false for files that ffmpeg interpers in its own way, but
+ * which are neither audio nor video. Examples include some image
+ * files (which ffmpeg interprets as single-frame sequences), media
+ * containers with data-only streams, etc. */
+function has_valid_streams(mediafile) {
+  if (mediafile.ffprobe.streams.find(s => s.codec_type=="audio")) {
+    return true;
+  } else if (mediafile.ffprobe.streams.find(s => s.codec_type=="audio" && s.duration_ts > 1)) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
 /* The state of a user-visible editing environment */
 function EditingSession() {
   this.groups = [];
@@ -76,27 +91,30 @@ EditingSession.prototype.all_files = function() {
       (acc, fs) => acc.concat(fs),
       []);
 }
-EditingSession.prototype.add_file = function(file) {
-  if (this.all_files().find(
-    f => f.ffprobe.format.filename===file.ffprobe.format.filename)) {
-    // file has already been added
+EditingSession.prototype.add_file = function(mediafile, err_callback) {
+  if (!has_valid_streams(mediafile)) {
+    err_callback && err_callback(new Error(`file has no video or audio streams: ${mediafile.ffprobe.format.filename}`));
     return false;
-  } else if (file.bounds().start===null) {
-    // maybe a file from the same recording already exists in this session
-    const related_ltc_file = this.all_files().find(f => f.ltc && f.from_same_recording_session(file));
+  } else if (this.all_files().find(f => f.ffprobe.format.filename===mediafile.ffprobe.format.filename)) {
+    // file is already in the session
+    err_callback && err_callback(new Error(`duplicate file: ${mediafile.ffprobe.format.filename}`));
+    return false;
+  } else if (mediafile.bounds().start===null) {
+    // no timecode information, but maybe a file from the same recording and with LTC already exists in this session
+    const related_ltc_file = this.all_files().find(f => f.ltc && f.from_same_recording_session(mediafile));
     if (related_ltc_file) {
-      file.ltc_file = related_ltc_file;
-      return this.add_file(file);
+      mediafile.ltc_file = related_ltc_file;
+      return this.add_file(mediafile);
     } else {
-      this.non_ltc_files.add_file(file);
-      return file;
+      this.non_ltc_files.add_file(mediafile);
+      return mediafile;
     }
   } else {
-    const overlaps_with = this.groups.filter(g => g.bounds().overlap(file.bounds()));
+    const overlaps_with = this.groups.filter(g => g.bounds().overlap(mediafile.bounds()));
     if (overlaps_with.length==0) {
-      this.groups.push((new FileGroup()).add_file(file));
+      this.groups.push((new FileGroup()).add_file(mediafile));
     } else if (overlaps_with.length==1) {
-      overlaps_with[0].add_file(file);
+      overlaps_with[0].add_file(mediafile);
     } else {
       // the file overlaps with multiple, non-overlapping groups--this
       // means the file is a bridge between these groups, and with the
@@ -109,24 +127,24 @@ EditingSession.prototype.add_file = function(file) {
         this.groups[this.groups.findIndex(e => e===g)]=null;
       });
       this.groups = this.groups.filter(g => g);
-      conjunction.add_file(file);
+      conjunction.add_file(mediafile);
     }
     // if this file is from the same recording session as some existing, non-ltc files, refile them
-    const related_files = this.non_ltc_files.files.filter(f => f.from_same_recording_session(file));
+    const related_files = this.non_ltc_files.files.filter(f => f.from_same_recording_session(mediafile));
     if (related_files.length) {
-      this.non_ltc_files.files = this.non_ltc_files.files.filter(f => !f.from_same_recording_session(file));
+      this.non_ltc_files.files = this.non_ltc_files.files.filter(f => !f.from_same_recording_session(mediafile));
       related_files.forEach(f => {
-        f.ltc_file = file;
+        f.ltc_file = mediafile;
         this.add_file(f);
       });
     }
-    return file;
+    return mediafile;
   }
 }
 function $EditingSession$add_file() {
   function stub_file(name, start, duration) {
     return new mf.MediaFile(
-      {format: {filename: name, duration: duration}, streams: []},
+      {format: {filename: name, duration: duration}, streams: [{codec_type: "audio"}]},
       {start_time: start});
   }
   const e = new EditingSession();
@@ -163,10 +181,13 @@ function $EditingSession$add_file() {
 
   // attempting to add a file that already exists modifies nothing and
   // returns false
-  assert(!e.add_file(stub_file("four.mp4", 2, 2)));
+  assert(!e.add_file(stub_file("four.mp4", 2, 2), err => assert(err.message.startsWith("duplicate file: "))));
+  assert.equal(e.all_files().length, 4);
 
   // adding a file with no LTC frames
-  assert(e.add_file(new mf.MediaFile({format: {filename: "non-ltc.mov"}}, null)));
+  const non_ltc = stub_file("non-ltc.mov", null, 10);
+  non_ltc.lct = null;
+  assert(e.add_file(non_ltc));
 
   // nothing has changed in the LTC groups...
   assert.equal(e.groups.length, 1);
@@ -221,6 +242,22 @@ function $EditingSession$add_file() {
         assert.equal(e.groups[0].files.length, 3);
         // and none end up in NON-LTC group, even though only tr1 has actual ltc
         assert.equal(e.non_ltc_files.files.length, 0);
+      });
+    });
+  });
+
+  // ffprobe reports some still images and even text as one-frame videos
+  mf.probe_file(path.join(__dirname, "../samples/LTCsync-screenshot.png"), (err, png) => {
+    assert.equal(err, null);    // file exists and ffmpeg interprets it in its way
+    mf.probe_file(path.join(__dirname, "../samples/buster.jpg"), (err, jpg) => {
+      assert.equal(err, null);
+      mf.probe_file(path.join(__dirname, "../samples/plain.txt"), (err, txt) => {
+        assert.equal(err, null);
+        const e = new EditingSession();
+        assert(!e.add_file(png, err => assert(err.message.startsWith("file has no video or audio streams:"))));
+        assert(!e.add_file(jpg, err => assert(err.message.startsWith("file has no video or audio streams:"))));
+        assert(!e.add_file(txt, err => assert(err.message.startsWith("file has no video or audio streams:"))));
+        assert.equal(e.all_files().length, 0);
       });
     });
   });

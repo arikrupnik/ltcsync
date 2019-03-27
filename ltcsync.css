@@ -2,11 +2,8 @@ body {
     font-family: monospace;
 }
 
-#filedisplay {
+#filedisplay table {
     white-space: nowrap;
-}
-
-table {
     width: 100%;
     border-collapse: collapse;
 }

@@ -136,32 +136,30 @@ function editing_session_to_html(session) {
 
 
 /* Adding files: either from menu (through RPC) or through
- * drag-and-ndrop. */
+ * drag-and-drop. */
 
-function addFiles(paths) {
-  paths.forEach(p => fs.stat(p, (err, stat) => {
+function addFiles(fpaths) {
+  fpaths.forEach(fpath => fs.stat(fpath, (err, stat) => {
     if (err) {
       display_error(err.message);
     } else if (stat.isDirectory()) {
-      fs.readdir(p, (err, files) => {
+      fs.readdir(fpath, (err, files) => {
         if (err) {
           display_error(err.message);
         } else {
-          addFiles(files.map(f => path.resolve(p, f)));
+          addFiles(files.map(f => path.resolve(fpath, f)));
         }
       });
     } else {
-      mf.probe_file(p, (err, file) => {
+      mf.probe_file(fpath, (err, mediafile) => {
         if (err) {
-          display_error(err.message);
-        } else if (document.editing_session.add_file(file)) {
+          display_error(`${err.message} (${fpath})`);
+        } else if (document.editing_session.add_file(mediafile, err => display_error(err.message))) {
           const fd=document.getElementById("filedisplay");
           while (fd.firstChild) {
             fd.removeChild(fd.lastChild);
           }
           fd.appendChild(editing_session_to_html(document.editing_session));
-        } else {
-          display_error(`skipping duplicate file: ${p}`);
         }
       });
     }
