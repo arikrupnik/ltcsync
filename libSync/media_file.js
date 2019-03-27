@@ -105,6 +105,7 @@ MediaFile.prototype.from_same_recording_session = function(file) {
   // there must be a more elegant way to express this invariant
   return ff0.streams.length==1 && ff1.streams.length==1 &&
     ff0.streams[0].codec_type==="audio" && ff1.streams[0].codec_type=="audio" &&
+    ff0.streams[0].duration_ts &&
     ff0.streams[0].duration_ts===ff1.streams[0].duration_ts;
 }
 function $MediaFile$from_same_recording_session() {
