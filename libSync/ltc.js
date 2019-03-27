@@ -100,9 +100,9 @@ function ltcdump(filepath, callback) {
 }
 
 function $ltcdump() {
-  ltcdump(path.join(__dirname, "../build/samples/ltc.wav"),
+  ltcdump(path.join(__dirname, "../samples/ltc.wav"),
           function(err, frames) {
-            assert(!err);
+            assert.equal(err, null);
             assert.equal(frames.length, 143);
             assert.deepEqual(frames[0],
                              {seconds: 17373,
@@ -169,28 +169,28 @@ function framerate(frames, sample_rate) {
 
 function $framerate() {
   ltcdump(path.join(__dirname,
-                    "../build/samples/ZOOM0004_Tr1.WAV"),
-          (err, frames) => assert.equal(framerate(frames, 48000), 24));
+                    "../samples/ZOOM0004_Tr1.WAV"),
+          (err, frames) => {assert.equal(err, null); assert.equal(framerate(frames, 48000), 24)});
   ltcdump(path.join(__dirname,
-                    "../build/samples/LTC_00_58_00_00__1mins_23976.wav"),
-          (err, frames) => assert.equal(framerate(frames, 48000), 24/1.001));
+                    "../samples/LTC_00_58_00_00__1mins_23976.wav"),
+          (err, frames) => {assert.equal(err, null); assert.equal(framerate(frames, 48000), 24/1.001)});
   ltcdump(path.join(__dirname,
-                    "../build/samples/LTC_00_58_00_00__1mins_24.wav"),
-          (err, frames) => assert.equal(framerate(frames, 48000), 24));
+                    "../samples/LTC_00_58_00_00__1mins_24.wav"),
+          (err, frames) => {assert.equal(err, null); assert.equal(framerate(frames, 48000), 24)});
   ltcdump(path.join(__dirname,
-                    "../build/samples/LTC_00_58_00_00__1mins_25.wav"),
-          (err, frames) => assert.equal(framerate(frames, 48000), 25));
+                    "../samples/LTC_00_58_00_00__1mins_25.wav"),
+          (err, frames) => {assert.equal(err, null); assert.equal(framerate(frames, 48000), 25)});
   // this file appears to have 30fps frames, although with DF flags
   // set and correctly omitting initial frames in a minute
   //ltcdump(path.join(__dirname,
-  //                  "../build/samples/LTC_00_58_00_00__1mins_2997_df.wav"),
-  //        (err, frames) => assert.equal(framerate(frames, 48000), 30/1.001));
+  //                  "../samples/LTC_00_58_00_00__1mins_2997_df.wav"),
+  //        (err, frames) => {assert.equal(err, null); assert.equal(framerate(frames, 48000), 30/1.001)});
   ltcdump(path.join(__dirname,
-                    "../build/samples/LTC_00_58_00_00__1mins_2997_ndf.wav"),
-          (err, frames) => assert.equal(framerate(frames, 48000), 30/1.001));
+                    "../samples/LTC_00_58_00_00__1mins_2997_ndf.wav"),
+          (err, frames) => {assert.equal(err, null); assert.equal(framerate(frames, 48000), 30/1.001)});
   ltcdump(path.join(__dirname,
-                    "../build/samples/LTC_00_58_00_00__1mins_30.wav"),
-          (err, frames) => assert.equal(framerate(frames, 48000), 30));
+                    "../samples/LTC_00_58_00_00__1mins_30.wav"),
+          (err, frames) => {assert.equal(err, null); assert.equal(framerate(frames, 48000), 30)});
 }
 
 /* translate TC into wall clock seconds since midnight */

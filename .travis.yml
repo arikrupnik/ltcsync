@@ -13,6 +13,7 @@ addons:
   homebrew:
     packages:
     - gnu-tar
+    - imagemagick
 
 before_install:
   # mingw is in the image, but missing from the PATH; need xz.exe for tar -xvJf

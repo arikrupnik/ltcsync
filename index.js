@@ -1,5 +1,7 @@
 // Modules to control application life and create native browser window
-const {app, ipcMain, BrowserWindow, Menu, dialog} = require("electron");
+const {app, ipcMain, BrowserWindow, Menu, dialog, nativeImage} = require("electron");
+const os = require("os");
+const path = require("path");
 
 exports.log = function(o) {
   return console.log(o);
@@ -48,7 +50,7 @@ function createWindow () {
           }
         },
         { label: "Toggle Developer Tools",
-          accelerator: process.platform === "darwin" ? "Alt+Command+I" : "Ctrl+Shift+I",
+          accelerator: os.platform() === "darwin" ? "Alt+Command+I" : "Ctrl+Shift+I",
           click (item, focusedWindow) {
             if (focusedWindow) focusedWindow.webContents.toggleDevTools()
           }
@@ -57,7 +59,10 @@ function createWindow () {
   Menu.setApplicationMenu(Menu.buildFromTemplate(t));
   
   // Create the browser window.
-  mainWindow = new BrowserWindow({width: 800, height: 600})
+  mainWindow = new BrowserWindow({width: 800, height: 600});
+  if (os.platform()=="linux") {
+    mainWindow.setIcon(nativeImage.createFromPath(path.join(__dirname, "icon.png")));
+  }
 
   // and load the index.html of the app.
   mainWindow.loadFile("ltcsync.html")

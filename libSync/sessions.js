@@ -178,14 +178,14 @@ function $EditingSession$add_file() {
   assert.equal(e.non_ltc_files.files.length, 1);
 
   // files from one recording session group together
-  mf.probe_file(path.join(__dirname, "../build/samples/ZOOM0004_LR.WAV"), (err, z_lr) => {
-    assert(!err);
+  mf.probe_file(path.join(__dirname, "../samples/ZOOM0004_LR.WAV"), (err, z_lr) => {
+    assert.equal(err, null);
     assert(!z_lr.bounds().start);
-    mf.probe_file(path.join(__dirname, "../build/samples/ZOOM0004_Tr1.WAV"), (err, z_tr1) => {
-      assert(!err);
+    mf.probe_file(path.join(__dirname, "../samples/ZOOM0004_Tr1.WAV"), (err, z_tr1) => {
+      assert.equal(err, null);
       assert(z_tr1.bounds().start);
-      mf.probe_file(path.join(__dirname, "../build/samples/ZOOM0004_Tr2.WAV"), (err, z_tr2) => {
-        assert(!err);
+      mf.probe_file(path.join(__dirname, "../samples/ZOOM0004_Tr2.WAV"), (err, z_tr2) => {
+        assert.equal(err, null);
         assert(!z_tr2.bounds().start);
 
         // add file with LTC first
@@ -201,14 +201,14 @@ function $EditingSession$add_file() {
       });
     });
   });
-  mf.probe_file(path.join(__dirname, "../build/samples/ZOOM0004_LR.WAV"), (err, z_lr) => {
-    assert(!err);
+  mf.probe_file(path.join(__dirname, "../samples/ZOOM0004_LR.WAV"), (err, z_lr) => {
+    assert.equal(err, null);
     assert(!z_lr.bounds().start);
-    mf.probe_file(path.join(__dirname, "../build/samples/ZOOM0004_Tr1.WAV"), (err, z_tr1) => {
-      assert(!err);
+    mf.probe_file(path.join(__dirname, "../samples/ZOOM0004_Tr1.WAV"), (err, z_tr1) => {
+      assert.equal(err, null);
       assert(z_tr1.bounds().start);
-      mf.probe_file(path.join(__dirname, "../build/samples/ZOOM0004_Tr2.WAV"), (err, z_tr2) => {
-        assert(!err);
+      mf.probe_file(path.join(__dirname, "../samples/ZOOM0004_Tr2.WAV"), (err, z_tr2) => {
+        assert.equal(err, null);
         assert(!z_tr2.bounds().start);
 
         // add file with LTC last

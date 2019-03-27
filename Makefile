@@ -5,7 +5,6 @@
 all: tests
 
 tests: native_binaries \
-	build/samples \
 	libSync/native_binary.run \
 	libSync/ltc.run \
 	libSync/media_file.run \
@@ -80,42 +79,49 @@ libSync/%-bin/ltcdump:
 	mkdir -p $(@D)
 	unzip -o    $(DOWNLOAD_DIR)/$(notdir $(@D))-ltcdump.zip $(@F) -d $(@D)
 
-# sample media files
-build/samples:
-	mkdir -p $(DOWNLOAD_DIR)
-	wget -nv -O $(DOWNLOAD_DIR)/samples.zip https://github.com/arikrupnik/ltcsync/releases/download/0.1.0/samples.zip
-	cd build; unzip $(notdir $(DOWNLOAD_DIR))/samples.zip
-
 
 # electron distributions
+
+build/icon.png: icon.svg
+	convert $< -resize 256x256 $@
+build/icon.ico: build/icon.png
+	convert $< $@
+build/icon.icns: build/icon.png
+	convert $< $@
 
 electron: tests \
 	build/LTCsync-win32-x64.zip \
 	build/LTCsync-win32-ia32.zip \
 	build/LTCsync-darwin-x64.zip \
 	build/LTCsync-linux-x64.zip \
-	build/LTCsync-linux-ia32.zip
+	build/LTCsync-linux-ia32.zip \
+	build/samples.zip
 
-build/LTCsync-win32-x64.zip:
-	electron-packager . --out build --overwrite --ignore 'downloads' --ignore 'libSync/.*-.*-bin' --platform win32  --arch x64
+build/LTCsync-win32-x64.zip: build/icon.ico
+	electron-packager . --out build --overwrite --ignore 'downloads' --ignore 'libSync/.*-.*-bin' --platform win32  --arch x64  --icon $<
 	cp -r libSync/win32-x64-bin  $(basename $@)/resources/app/libSync/
 	cd build; zip -r ../$@ $(notdir $(basename $@))
-build/LTCsync-win32-ia32.zip:
-	electron-packager . --out build --overwrite --ignore 'downloads' --ignore 'libSync/.*-.*-bin' --platform win32  --arch ia32
+build/LTCsync-win32-ia32.zip: build/icon.ico
+	electron-packager . --out build --overwrite --ignore 'downloads' --ignore 'libSync/.*-.*-bin' --platform win32  --arch ia32 --icon $<
 	cp -r libSync/win32-ia32-bin $(basename $@)/resources/app/libSync/
 	cd build; zip -r ../$@ $(notdir $(basename $@))
-build/LTCsync-darwin-x64.zip:
-	electron-packager . --out build --overwrite --ignore 'downloads' --ignore 'libSync/.*-.*-bin' --platform darwin --arch x64
+build/LTCsync-darwin-x64.zip: build/icon.icns
+	electron-packager . --out build --overwrite --ignore 'downloads' --ignore 'libSync/.*-.*-bin' --platform darwin --arch x64  --icon $<
 	cp -r libSync/darwin-x64-bin $(basename $@)/LTCsync.app/Contents/Resources/app/libSync/
 	cd build; zip -r ../$@ $(notdir $(basename $@))
-build/LTCsync-linux-x64.zip:
+build/LTCsync-linux-x64.zip: build/icon.png
 	electron-packager . --out build --overwrite --ignore 'downloads' --ignore 'libSync/.*-.*-bin' --platform linux  --arch x64
 	cp -r libSync/linux-x64-bin  $(basename $@)/resources/app/libSync/
+	cp $< $(basename $@)/resources/app/
 	cd build; zip -r ../$@ $(notdir $(basename $@))
-build/LTCsync-linux-ia32.zip:
+build/LTCsync-linux-ia32.zip: build/icon.png
 	electron-packager . --out build --overwrite --ignore 'downloads' --ignore 'libSync/.*-.*-bin' --platform linux  --arch ia32
 	cp -r libSync/linux-ia32-bin $(basename $@)/resources/app/libSync/
+	cp $< $(basename $@)/resources/app/
 	cd build; zip -r ../$@ $(notdir $(basename $@))
+
+build/samples.zip:
+	zip -r $@ samples
 
 clean:
 	rm -rf build libSync/*-bin/
