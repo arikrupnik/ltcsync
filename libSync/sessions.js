@@ -28,37 +28,40 @@ FileGroup.prototype.bounds = function() {
   }
 }
 function $FileGroup$bounds() {
+  const mf0 = new mf.MediaFile({format: {duration: "2"}}, {start_time: 1});
+  mf0.wc_start = () => 1;
+  const mf1 = new mf.MediaFile({format: {duration: "2"}}, {start_time: 2});
+  mf1.wc_start = () => 2;
   const group_with_ltc = new FileGroup();
-  group_with_ltc.files = [
-    new mf.MediaFile({format: {duration: "2"}}, {start_time: 1}),
-    new mf.MediaFile({format: {duration: "2"}}, {start_time: 2}),
-  ];
+  group_with_ltc.files = [mf0, mf1];
   assert.deepEqual(group_with_ltc.bounds(), new mf.Bounds(1, 3));
 
   const group_without_ltc = new FileGroup();
   group_without_ltc.files = [
-    new mf.MediaFile({format: {duration: "2"}}, null),
-    new mf.MediaFile({format: {duration: "1"}}, null),
+    new mf.MediaFile({format: {duration: "2"}}, []),
+    new mf.MediaFile({format: {duration: "1"}}, []),
   ];
   assert.deepEqual(group_without_ltc.bounds(), new mf.Bounds(null, 2));
 }
+
 FileGroup.prototype.compare = function(group) {
   return this.bounds().start-group.bounds().start;
 }
 function $FileGroup$compare() {
+  const mf1 = new mf.MediaFile({format: {duration: "2"}});
+  const mf2 = new mf.MediaFile({format: {duration: "2"}});
+  const mf3 = new mf.MediaFile({format: {duration: "2"}});
+  mf1.wc_start = () => 1;
+  mf2.wc_start = () => 2;
+  mf3.wc_start = () => 3;
   const g0 = new FileGroup();
-  g0.files = [
-    new mf.MediaFile({format: {duration: "2"}}, {start_time: 1}),
-    new mf.MediaFile({format: {duration: "2"}}, {start_time: 2}),
-  ];
+  g0.files = [mf1, mf2];
   const g1 = new FileGroup();
-  g1.files = [
-    new mf.MediaFile({format: {duration: "2"}}, {start_time: 2}),
-    new mf.MediaFile({format: {duration: "2"}}, {start_time: 3}),
-  ];
+  g1.files = [mf2, mf3];
   assert(g0.compare(g1) < 0);
   assert(g1.compare(g0) > 0);
 }
+
 FileGroup.prototype.add_file = function(file) {
   this.files.push(file);
   return this;
@@ -72,7 +75,7 @@ FileGroup.prototype.add_file = function(file) {
 function has_valid_streams(mediafile) {
   if (mediafile.ffprobe.streams.find(s => s.codec_type=="audio")) {
     return true;
-  } else if (mediafile.ffprobe.streams.find(s => s.codec_type=="audio" && s.duration_ts > 1)) {
+  } else if (mediafile.ffprobe.streams.find(s => s.codec_type=="video" && s.duration_ts > 1)) {
     return true;
   } else {
     return false;
@@ -101,7 +104,7 @@ EditingSession.prototype.add_file = function(mediafile, err_callback) {
     return false;
   } else if (mediafile.bounds().start===null) {
     // no timecode information, but maybe a file from the same recording and with LTC already exists in this session
-    const related_ltc_file = this.all_files().find(f => f.ltc && f.from_same_recording_session(mediafile));
+    const related_ltc_file = this.all_files().find(f => f.has_ltc() && f.from_same_recording_session(mediafile));
     if (related_ltc_file) {
       mediafile.ltc_file = related_ltc_file;
       return this.add_file(mediafile);
@@ -143,9 +146,11 @@ EditingSession.prototype.add_file = function(mediafile, err_callback) {
 }
 function $EditingSession$add_file() {
   function stub_file(name, start, duration) {
-    return new mf.MediaFile(
-      {format: {filename: name, duration: duration}, streams: [{codec_type: "audio"}]},
-      {start_time: start});
+    const f = new mf.MediaFile(
+      {format: {filename: name, duration: duration},
+       streams: [{codec_type: "audio"}]}, []);
+    f.wc_start = () => start;
+    return f;
   }
   const e = new EditingSession();
   assert.equal(e.groups.length, 0);

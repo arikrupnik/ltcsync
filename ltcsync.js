@@ -89,8 +89,8 @@ function nonoverlapping_groups_to_html(groups) {
   h.appendChild(document.createElement("td"));
   h.appendChild(document.createElement("td"));
   h.appendChild(document.createElement("th")).innerHTML=`Non-overlapping files with embedded timecode: ${groups.length}`;
-
-  groups.forEach(g => g.files.forEach(f => e.appendChild(file_to_html(f, null))));
+  const sorted_groups=groups.slice().sort((g0, g1) => g0.compare(g1));
+  sorted_groups.forEach(g => g.files.forEach(f => e.appendChild(file_to_html(f, null))));
 
   return e;
 }
@@ -102,7 +102,8 @@ function nonltc_file_group_to_html(group) {
   h.appendChild(document.createElement("th"));
   h.appendChild(document.createElement("th")).innerHTML="Duration";
   h.appendChild(document.createElement("th")).innerHTML=`Files without embedded timecode: ${group.files.length}`;
-  group.files.forEach(f => e.appendChild(file_to_html(f, group.bounds())));
+  const sorted_files=group.files.slice().sort((f0, f1) => f0.compare(f1));
+  sorted_files.forEach(f => e.appendChild(file_to_html(f, group.bounds())));
 
   return e;
 }
