@@ -3,7 +3,7 @@ body {
 }
 
 #filedisplay table {
-    white-space: nowrap;
+    white-space: pre;
     width: 100%;
     border-collapse: collapse;
 }
@@ -30,15 +30,23 @@ td, .group-header th {
     border-right: solid thin;
 }
 
-.name {
+.file {
     width: 100%;
     padding: 1px;
 }
 
-.name > span {
+.file > span {
     display: inline-block;
     overflow: visible;
-    background: coral;
+}
+
+.file > span.name {
+    background: Coral;
+}
+
+.file > span.padding {
+    background: PeachPuff;
+    text-align: center;
 }
 
 

@@ -57,13 +57,27 @@ function file_to_html(file, group_bounds) {
   e.appendChild(document.createElement("td")).innerHTML=pretty_time(eval(file.ffprobe.format.duration));
 
   const fnc=e.appendChild(document.createElement("td"));
-  fnc.setAttribute("class", "name");
-  const fn=fnc.appendChild(document.createElement("span"));
-  fn.innerHTML = path.basename(file.ffprobe.format.filename);
+  fnc.setAttribute("class", "file");
+
   const lb=longest_bounds(document.editing_session);
+
+  if(file.bounds().start && group_bounds) {
+    // file is in a group of overlapping files
+    const padding_s = file.bounds().start-group_bounds.start;
+    if (padding_s) {
+      // file needs padding relative to group
+      const fp=fnc.appendChild(document.createElement("span"));
+      fp.setAttribute("class", "padding");
+      fp.setAttribute("style", `width: ${padding_s/lb*100}%;`);
+      fp.innerHTML = `(${padding_s.toFixed(3)}s)`;
+    }
+  }
+
   const width=eval(file.ffprobe.format.duration)/lb;
-  const margin_left=(file.bounds().start && group_bounds) ? (file.bounds().start-group_bounds.start)/lb : 0;
-  fn.setAttribute("style", `width: ${width*100}%; margin-left: ${margin_left*100}%`);
+  const fn=fnc.appendChild(document.createElement("span"));
+  fn.setAttribute("class", "name");
+  fn.innerHTML = path.basename(file.ffprobe.format.filename);
+  fn.setAttribute("style", `width: ${width*100}%;`);
   
   return e;
 }
