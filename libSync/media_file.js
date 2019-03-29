@@ -229,19 +229,11 @@ function $Bounds() {
  * represents metadata about an audio or video file. It contains a
  * combination of ffprobe(1) data and LTC timing information.
 
- * `ffprobe` is the verbatum output of ffprobe(1)
+ * `ffprobe` is the verbatim output of ffprobe(1)
  * `ltc` is an array of LTC dumps, one per channel in each audio
  * stream, to which MediaFile adds two pieces of information: the
  * index of the audio stream from which the frames came, and the
- * channel number within the stream.
-
- For LTC,
- * result includes only file start time. Upcoming versions my include
- * additional information, such as quality of LTC signal, framerate,
- * etc. `ltc.start_time` is the start time of the entire file. This
- * value may be different from the value in the first LTC frame of the
- * file if the file starts in the middle of a frame, or if the stream
- * has a non-zero offset from the start of the container. */
+ * channel number within the stream. */
 function MediaFile(ffprobe, ltc) {
   this.ffprobe = ffprobe;
   this.ltc = ltc;
@@ -252,6 +244,19 @@ function MediaFile(ffprobe, ltc) {
   // value as a pointer to the file that does contain LTC. See also
   // MediaFile.from_same_recording_session()
   this.ltc_file = null;
+}
+
+MediaFile.prototype.ltc_quality = function() {
+  if (!this.ltc || !this.ltc.length) {
+    return 0;
+  }
+  const best_ltc = this.ltc[0];
+  const stream = this.ffprobe.streams[best_ltc.s];
+  return best_ltc.quality(stream.duration, stream.sample_rate);
+}
+
+MediaFile.prototype.has_ltc = function() {
+  return this.ltc_quality() > 0.75;
 }
 
 /* Main entry point into this module. Callback argument is a MediaFile
@@ -279,25 +284,23 @@ function $probe_file() {
              (err, media_file) => {
                assert.equal(err, null);
                assert.equal(media_file.ltc.length, 2);
+               assert.equal(media_file.ltc_quality(), 0.9922651415713483);
+               assert(media_file.has_ltc());
              });
   probe_file(path.join(__dirname, "../samples/ZOOM0004_Tr1.WAV"),
              (err, media_file) => {
                assert.equal(err, null);
                assert.equal(media_file.ltc.length, 1);
+               assert.equal(media_file.ltc_quality(), 0.9973724496862045);
+               assert(media_file.has_ltc());
              });
   probe_file(path.join(__dirname, "../samples/ZOOM0004_Tr2.WAV"),
              (err, media_file) => {
                assert.equal(err, null);
                assert.equal(media_file.ltc.length, 1);
+               assert.equal(media_file.ltc_quality(), 0.003213453898935812);
+               assert(!media_file.has_ltc());
              });
-}
-
-MediaFile.prototype.has_ltc = function() {
-  if (!this.ltc.length) {
-    return false;
-  }
-  const stream = this.ffprobe.streams[this.ltc[0].s];
-  return this.ltc[0].quality(stream.duration, stream.sample_rate) > 0.75;
 }
 
 MediaFile.prototype.wc_start = function() {

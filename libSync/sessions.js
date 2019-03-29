@@ -104,7 +104,7 @@ EditingSession.prototype.add_file = function(mediafile, err_callback) {
     return false;
   } else if (mediafile.bounds().start===null) {
     // no timecode information, but maybe a file from the same recording and with LTC already exists in this session
-    const related_ltc_file = this.all_files().find(f => f.has_ltc() && f.from_same_recording_session(mediafile));
+    const related_ltc_file = this.all_files().find(f => f.from_same_recording_session(mediafile) && f.has_ltc());
     if (related_ltc_file) {
       mediafile.ltc_file = related_ltc_file;
       return this.add_file(mediafile);
