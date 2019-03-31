@@ -14,6 +14,11 @@ addons:
     packages:
     - gnu-tar
     - imagemagick
+    - wine
+  apt:
+    packages:
+    - icnsutils
+    - wine
 
 before_install:
   # mingw is in the image, but missing from the PATH; need xz.exe for tar -xvJf
