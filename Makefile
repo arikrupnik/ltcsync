@@ -1,4 +1,12 @@
-
+# dependencies:
+#
+# node & electron (obviously)
+# electron-packager
+# wget
+# gnu tar (for unpacking johnvansickle.com archives)
+# ImageMagick (for icons)
+# on Linux and Windows: icnsutils (for macOS icons)
+# on Linux and macOS: wine (for electron-packager)
 
 # default target: run tests
 
@@ -82,15 +90,6 @@ libSync/%-bin/ltcdump:
 
 # electron distributions
 
-build/icon256.png: icon.svg
-	for s in 16 32 64 128 256 512; do convert icon.svg -resize "$$s"x$s build/icon$$s.png; done
-build/icon.ico: build/icon256.png
-	convert $< $@
-build/icon.icns: build/icon256.png
-	cd build; png2icns icon.icns icon16.png icon32.png icon128.png icon256.png icon512.png
-build/icon.png: build/icon256.png
-	cp $< $@
-
 electron: tests \
 	build/LTCsync-win32-x64.zip \
 	build/LTCsync-win32-ia32.zip \
@@ -98,6 +97,15 @@ electron: tests \
 	build/LTCsync-linux-x64.zip \
 	build/LTCsync-linux-ia32.zip \
 	build/samples.zip
+
+build/icon.ico: build/icon.png
+	convert $< $@
+build/icon.icns: icon.svg
+	mkdir -p build/icon.iconset
+	for s in 16 32 128 256 512; do convert icon.svg -resize "$$s"x$s build/icon.iconset/icon$$s.png; done
+	png2icns $@ `ls -Sr build/icon.iconset/*png` || iconutil -c icns -o $@ icon.iconset
+build/icon.png: icon.svg
+	convert $< -resize 256x256 $@
 
 ELECTRON_IGNORE = --ignore 'downloads' --ignore 'libSync/.*-.*-bin' --ignore '/samples' --ignore 'Makefile' --ignore '/.git*' --ignore '.travis.yml' --ignore 'icon.*.png'
 
