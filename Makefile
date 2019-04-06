@@ -102,7 +102,7 @@ build/icon.ico: build/icon.png
 	convert $< $@
 build/icon.icns: icon.svg
 	mkdir -p build/icon.iconset
-	for s in 16 32 128 256 512; do convert icon.svg -resize "$$s"x$s build/icon.iconset/icon$$s.png; done
+	for s in 16 32 128 256 512; do convert $< -resize "$$s"x$s build/icon.iconset/icon"$$s"x$$s.png; done
 	png2icns $@ `ls -Sr build/icon.iconset/*png` || iconutil -c icns -o $@ icon.iconset
 build/icon.png: icon.svg
 	convert $< -resize 256x256 $@
