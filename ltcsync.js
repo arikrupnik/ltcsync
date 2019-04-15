@@ -3,6 +3,7 @@ const electron=require("electron");
 const path = require("path");
 const fs = require("fs");
 const mf = require("./libSync/media_file");
+const pf = require("./libSync/padding_file");
 const sessions = require("./libSync/sessions");
 
 /* Housekeeping */
@@ -165,6 +166,8 @@ function addFiles(fpaths) {
           addFiles(files.map(f => path.resolve(fpath, f)));
         }
       });
+    } else if (path.basename(fpath).includes(pf.PAD_SUFFIX)) {
+      // ignore generated files
     } else {
       mf.probe_file(fpath, (err, mediafile) => {
         if (err) {
@@ -181,6 +184,26 @@ function addFiles(fpaths) {
   }));
 }
 
+/* Generating Output */
+function generate_padding_files(session) {
+  session.groups.filter(g => g.files.length>1).forEach(g => {
+    g.files.forEach(f => {
+      const offset = f.bounds().start - g.bounds().start;
+      if (offset) {
+        pf.write_padding_file(f, offset, (e, p) => {
+          if (e) {
+            display_error(e);
+          } else {
+            display_error(`wrote ${p}`);
+          }
+        });
+      }
+    });
+  });
+}
+
+
+/* User Input */
 electron.ipcRenderer.on("addFiles", function(event, paths) {
   addFiles(paths);
 });
@@ -194,4 +217,8 @@ document.addEventListener("drop", function (e) {
 document.addEventListener("dragover", function (e) {
   e.preventDefault();
   e.stopPropagation();
+});
+
+electron.ipcRenderer.on("generate_padding_files", function(event) {
+  generate_padding_files(document.editing_session);
 });

@@ -1,5 +1,5 @@
-/* timing_metadata.js: find start and end times for audio and video
- * files using LTC embedded in audio. */
+/* media_file.js: metadata about a video or audio file, including
+ * timecode from LTC embedded in audio. */
 
 const path = require("path");
 const fs = require("fs");
@@ -125,10 +125,10 @@ function extract_ltc(ffprobe, callback) {
             callback(new Error(e), null);
           } else {
             ltc.dump(wav_file, (err, dump) => {
+              fs.unlinkSync(wav_file);
               if (err) {
                 callback(err, null);
               } else {
-                fs.unlinkSync(wav_file);
                 dump.s = stream.index;
                 dump.c = channel;
                 dumps.push(dump);

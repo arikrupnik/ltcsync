@@ -33,13 +33,16 @@ function createWindow () {
                                    properties: ["openDirectory"]},
                                   openFiles)
           }},
-        { label: "Export Synchronized...", enabled: false},
+        { label: "Generate Padding Files",
+          click: function(m,w,e){
+            mainWindow.webContents.send("generate_padding_files");
+          }},
         { type: "separator" },
         { role: "quit" },
       ]},
 
   ];
-  if (true) {
+  if (!app.isPackaged) {
     t.push(
     { label: "View",
       submenu: [

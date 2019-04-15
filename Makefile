@@ -16,6 +16,7 @@ tests: native_binaries \
 	libSync/native_binary.run \
 	libSync/ltc.run \
 	libSync/media_file.run \
+	libSync/padding_file.run \
 	libSync/sessions.run
 
 %.run: %.js
