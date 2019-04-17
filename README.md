@@ -15,7 +15,7 @@ Frame rate, audio sample rate, dimensions, etc. in `B-LTCsyncPAD.MOV` follow as 
 ![screenshot](samples/LTCsync-screenshot.png)
 
 If you're looking for background on Linear Timecode (LTC), this Wikipedia [article](https://en.wikipedia.org/wiki/Linear_timecode) may be a useful starting point.
-The [technical specification](https://www.itu.int/dms_pubrec/itu-r/rec/br/R-REC-BR.780-2-200504-I!!PDF-E.pdf) is available from the International Telecommunications Union.
+The [technical specification](https://www.itu.int/dms_pubrec/itu-r/rec/br/R-REC-BR.780-2-200504-W!!PDF-E.pdf) is available from the International Telecommunications Union.
 
 **System Requirements**
 
