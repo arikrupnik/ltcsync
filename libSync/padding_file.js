@@ -23,6 +23,16 @@ function $suffix_filename() {
 }
 
 function write_padding_file(prototype, duration, callback) {
+  /* Ideally, I want to generate padding files that have the same *
+   stream layout at their prototypes. I have run into some limitations
+   with audio streams in video files. Some files have codecs that
+   ffmpeg can decode but not encode, e.g., pcm_bluray in MTS files;
+   AAC stremas have a priming sample that introduces ambiguity as to
+   their durations[1]; and MP4 containers cannot encapsulate PCM
+   streams.
+   Until a more comprehensive solution is in place, I'm generating
+   files that contain either video or audio.
+   [1] https://stackoverflow.com/questions/42410479/ffmpeg-wrong-audio-file-after-conversion-in-aac */
   const vs = prototype.ffprobe.streams.find(s => s.codec_type=="video");
   const as = prototype.ffprobe.streams.find(s => s.codec_type=="audio");
   if (!vs && !as) {
@@ -34,21 +44,15 @@ function write_padding_file(prototype, duration, callback) {
   if (vs) {
     // `color` takes additional parameter, `d=seconds`; an alternative to `-t`
     args=args.concat(`-f lavfi -i color=c=black:s=${vs.width}x${vs.height}:r=${vs.r_frame_rate}`.split(" "));
-  }
-  if (as) {
+  } else if (as) {
     // `anullsrc` takes additional parameter, `n=samples`; an alternative to `-t`
     args=args.concat(`-f lavfi -i anullsrc=cl=mono:r=${as.sample_rate}`.split(" "));
   }
   // output codec arguments
   if (vs) {
     args=args.concat(`-c:v ${vs.codec_name}`.split(" "));
-  }
-  if (as) {
-    // Some files have codecs that ffmpeg can decode but not encode,
-    // e.g., pcm_bluray in MTS files; until a more comprehensive
-    // solution is in place, I'm using a simple pcm codec
-    const codec_name = as.codec_name.includes("pcm") ? "pcm_s8" : as.codec_name
-    args=args.concat(`-c:a ${codec_name}`.split(" "));
+  } else if (as) {
+    args=args.concat(`-c:a ${as.codec_name}`.split(" "));
   }
   // consider rounding `duration` to an even number of frames when video is present
   args=args.concat(["-t", duration]);

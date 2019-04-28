@@ -8,7 +8,7 @@ LTCsync runs on MacOS, Windows and Linux.
 
 **Current status**: LTCsync reads media files in many different formats and correctly identifies relative start times.
 `File -> Generate Padding Files` builds blank files you can use to position your sources on an NLE timeline.
-For example, if `B.MOV` starts 2.5 seconds after `A.WAV`, LTCsync generates `B-LTCsyncPAD.MOV` that is 2.5 seconds of black and silence.
+For example, if `B.MOV` starts 2.5 seconds after `A.WAV`, LTCsync generates `B-LTCsyncPAD.MOV` that is 2.5 seconds of black.
 Frame rate, audio sample rate, dimensions, etc. in `B-LTCsyncPAD.MOV` follow as closely as possible the format of `B.MOV`.
 
 
