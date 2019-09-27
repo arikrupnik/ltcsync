@@ -23,3 +23,9 @@ macOS 10.10 or higher; Windows 7 or higher; any reasonably modern Linux.
 We provide pre-built binaries for 64-bit OSs.
 32-bit x86 targets for Windows and Linux are available in the Makefile and we can provide binaries on demand.
 We'd be curious to hear about your setup if you need those.
+
+**Running the git version**: After you clone the repository, run `make` in the working directory.
+This downloads and unpacks binary dependencies and checks their consistency.
+Unless you perform this step, you're likely to see errors like this, complaining about missing binaries:
+
+    Error: spawn /home/user/ltcsync/libSync/linux-x64-bin/ltcdump ENOENT

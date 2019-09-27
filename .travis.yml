@@ -15,6 +15,7 @@ addons:
     - gnu-tar
     - imagemagick
     - wine
+    update: true
   apt:
     packages:
     - icnsutils

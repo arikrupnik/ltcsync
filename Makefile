@@ -37,8 +37,11 @@ ffmpeg: libSync/win32-x64-bin/ffmpeg.exe \
 libSync/win32-x64-bin/ffmpeg.exe:  URL=https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-4.1-win64-static.zip
 libSync/win32-ia32-bin/ffmpeg.exe: URL=https://ffmpeg.zeranoe.com/builds/win32/static/ffmpeg-4.1-win32-static.zip
 libSync/darwin-x64-bin/ffmpeg:     URL=https://ffmpeg.zeranoe.com/builds/macos64/static/ffmpeg-4.1-macos64-static.zip
-libSync/linux-x64-bin/ffmpeg:      URL=https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
-libSync/linux-ia32-bin/ffmpeg:     URL=https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-i686-static.tar.xz
+# for the sake of consistency, for now I'm using 4.1.4 release from https://www.johnvansickle.com/ffmpeg/old-releases/
+#libSync/linux-x64-bin/ffmpeg:      URL=https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
+#libSync/linux-ia32-bin/ffmpeg:     URL=https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-i686-static.tar.xz
+libSync/linux-x64-bin/ffmpeg:      URL=https://johnvansickle.com/ffmpeg/old-releases/ffmpeg-4.1.4-amd64-static.tar.xz
+libSync/linux-ia32-bin/ffmpeg:     URL=https://johnvansickle.com/ffmpeg/old-releases/ffmpeg-4.1.4-i686-static.tar.xz
 
 libSync/win32-%-bin/ffmpeg.exe:
 	mkdir -p $(DOWNLOAD_DIR)
