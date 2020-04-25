@@ -62,7 +62,13 @@ function createWindow () {
   Menu.setApplicationMenu(Menu.buildFromTemplate(t));
   
   // Create the browser window.
-  mainWindow = new BrowserWindow({width: 800, height: 600});
+  mainWindow = new BrowserWindow({
+    width: 800,
+    height: 600,
+    webPreferences: {
+      nodeIntegration: true,
+    },
+  });
   if (os.platform()=="linux") {
     mainWindow.setIcon(nativeImage.createFromPath(path.join(__dirname, "icon.png")));
   }
